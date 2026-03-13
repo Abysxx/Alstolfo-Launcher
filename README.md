@@ -14,12 +14,12 @@ python setup.py py2app
 ```
 3. Move the Bin and Game folders to the app's content folder
 ```
-mv ./Bin/ ./dist/Alstolfo\ Launcher/Contents/
-mv ./Game/ ./dist/Alstolfo\ Launcher/Contents/
+mv ./Bin/ ./dist/Alstolfo\ Launcher.app/Contents/
+mv ./Game/ ./dist/Alstolfo\ Launcher.app/Contents/
 ```
 4. Replace the default icns file with Alstolfo's
 ```
-mv ./Extras/PythonApplet.icns ./dist/Alstolfo\ Launcher/Contents/Resources/
+mv ./Extras/PythonApplet.icns ./dist/Alstolfo\ Launcher.app/Contents/Resources/
 ```
 5. Done
 Feel free to move it out of the dist folder and delete any extra stuff.
