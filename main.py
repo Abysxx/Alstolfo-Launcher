@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5 import QtCore, QtGui, QtWidgets, QtNetwork, QtSvg
+from PyQt5.QtGui import QFontMetrics
 from time import sleep
 import warnings
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -13,9 +14,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.*=false"
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-pydir = script_dir
-#pydir = os.path.dirname(script_dir)
-#pydir = pydir+"/Resources"
+# Switch the comments around if you want to use it as a normal python file
+#pydir = script_dir
+pydir = os.path.dirname(script_dir)
 
 blox_name = "bloxv333"
 
@@ -256,13 +257,11 @@ class Window(QWidget):
     def changeEvent(self, event):
         if event.type() == QEvent.WindowStateChange:
             if self.windowState() == Qt.WindowMinimized:
-                print("[DEBUG]: Window Minimized")
                 self._Minimized = True
                 return
 
             if self.windowState() == Qt.WindowNoState:
                 if self._RestoreCounter == 2:
-                    print("[DEBUG]: Window Restored")
                     self._RestoreCounter = 0
                     return
                 else:
@@ -311,7 +310,7 @@ class TopFrame(QFrame):
         self.initial_pos = None
 
         #---    Window Title     ---#
-        self.wTitle = QLabel("Alstolfo Launcher v1.0",self)
+        self.wTitle = QLabel("Alstolfo Launcher v1.1",self)
         self.wTitle.move(10,5)
         self.wTitle.setStyleSheet("color:#dbe3dc; font-size:30px;border:none;")
 
@@ -445,7 +444,7 @@ class BackFrame(QFrame):
         self.defaultToAutoChkbx.move(50,400)
         self.defaultToAutoChkbx.setStyleSheet(self.checkbox_style)
         self.defaultToAutoChkbx.setChecked(self.settings["DEFAULT_TO_AUTO"])
-        self.defaultToAutoChkbx.stateChanged.connect(lambda _: self.change_setting("AUTO_GET_PROXIES", self.defaultToAutoChkbx.isChecked()))
+        self.defaultToAutoChkbx.stateChanged.connect(lambda _: self.change_setting("DEFAULT_TO_AUTO", self.defaultToAutoChkbx.isChecked()))
 
         self.closeOnLaunchChkbx = QCheckBox("Close On Launch",self)
         self.closeOnLaunchChkbx.setFixedWidth(200); self.closeOnLaunchChkbx.setFixedHeight(50)
@@ -493,17 +492,14 @@ class BackFrame(QFrame):
 
     def validate_file(self):
         if not os.path.exists(f"{pydir}/Bin/socks5.txt"):
-            print("[Alstolfo-File]: socks5.txt Not Found - Creating File")
+            print("[Alstolfo]: socks5.txt Not Found - Creating File")
             with open(f"{pydir}/Bin/socks5.txt","w+") as file:
                 pass
-            file.close()
         with open(f"{pydir}/Bin/socks5.txt", "r+") as file:
             lines = file.readlines()
         valid_lines = [line for line in lines if re.fullmatch(r"(?:\d{1,3}\.){3}\d{1,3}:\d+", line.strip())]
-        file.close()
         with open(f"{pydir}/Bin/socks5.txt", "w+") as file:
             file.writelines(valid_lines)
-        file.close()
 
     def manage_proxies_popup(self):
         self.popup = ProxyMenu(backframe=self)
@@ -546,6 +542,7 @@ class TopBar(QFrame):
             self.parent().close()
         else:
             self.parent().close()
+
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.initial_pos = event.pos()
@@ -665,8 +662,6 @@ class ProxyMenu(QWidget):
 
         self.selectProxyCB.blockSignals(False)
 
-
-
     def get_proxies_popup(self, bf, wt):
         self.popup = ManageProxies(backframe=bf,what=wt)
         self.popup.show()
@@ -675,7 +670,6 @@ class ProxyMenu(QWidget):
         with open(f"{pydir}/Bin/socks5.txt","r+") as file:
             lines = file.readlines()
             self.editBox.setPlainText("".join(lines))
-        file.close()
         self.pop_proxies()
 
 class ManageProxies(QWidget):
@@ -702,14 +696,9 @@ class ManageProxies(QWidget):
         if hasattr(p, "validate_file"):
             p.validate_file()
 
-        #img = QLabel(self.content)
-        #pixmap = QPixmap('./image.png').scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        #img.setPixmap(pixmap)
-        #img.move(25, 25)
-
         img = QLabel(self.content)
         movie = QMovie(f'{pydir}/Bin/hm.gif')
-        movie.setScaledSize(QSize(150, 150))  # scale the animation
+        movie.setScaledSize(QSize(150, 150))
         img.setMovie(movie)
         img.move(25, 25)
         movie.start()
@@ -739,6 +728,21 @@ class ManageProxies(QWidget):
 
         QTimer.singleShot(200, self.what_am_i_doing)
 
+    def scaleLabelText(self, label, max_size=20, min_size=6):
+        font = label.font()
+        rect = label.contentsRect()
+
+        for size in range(max_size, min_size, -1):
+            font.setPointSize(size)
+            metrics = QFontMetrics(font)
+            if metrics.boundingRect(label.text()).width() <= rect.width() \
+               and metrics.height() <= rect.height():
+                label.setFont(font)
+                return
+
+    def setwhattext(self,text):
+        self.whatLabel.setText(text)
+        self.scaleLabelText(self.whatLabel)
     # ---------- Flow Control ---------- #
     def what_am_i_doing(self):
         if self._Bruh == "Get":
@@ -768,7 +772,7 @@ class ManageProxies(QWidget):
 
     # ---------- Scrape ---------- #
     def start_scrape(self, then_test=False):
-        self.whatLabel.setText("Fetching New Proxies...")
+        self.setwhattext("Fetching New Proxies...")
         self.progress.setRange(0, len(self.SOCKS5_SOURCES))
         self.progress.setValue(0)
 
@@ -776,7 +780,7 @@ class ManageProxies(QWidget):
         worker.signals.progress.connect(self.progress.setValue)
         worker.signals.text.connect(self.whatLabel.setText)
         worker.signals.finished.connect(
-            lambda: self.start_test() if then_test else self.whatLabel.setText("Done")
+            lambda: self.start_test() if then_test else self.setwhattext("Done")
         )
         self.threadpool.start(worker)
 
@@ -805,26 +809,28 @@ class ManageProxies(QWidget):
         with open(self.OUTPUT_FILE, "w") as f:
             f.write("\n".join(sorted(proxies)))
 
-        signals.text.emit(f"[Alstolfo-Proxy]: Saved {len(proxies)} proxies")
-        signals.finished.emit()
+        signals.text.emit(f"[Alstolfo]: Saved {len(proxies)} proxies")
+        print(f"[Alstolfo]: Saved {len(proxies)} proxies")
 
     # ---------- Test ---------- #
     def start_test(self):
         if not os.path.isfile(self.OUTPUT_FILE):
-            self.whatLabel.setText("No proxy file found!")
+            self.setwhattext("No proxy file found!")
             return
 
         with open(self.OUTPUT_FILE, "r", encoding="utf-8") as f:
             proxies = [p.strip() for p in f if p.strip()]
-
-        self.whatLabel.setText("Testing Proxies...")
+        if not proxies:
+            self.setwhattext("No proxies found. Please Get/Test proxies first.")
+            return
+        self.setwhattext("Testing Proxies...")
         self.progress.setRange(0, len(proxies))
         self.progress.setValue(0)
 
         worker = Worker(self.check_proxies_concurrent, proxies)
         worker.signals.progress.connect(self.progress.setValue)
         worker.signals.text.connect(self.whatLabel.setText)
-        worker.signals.finished.connect(lambda: self.whatLabel.setText("Finished"))
+        worker.signals.finished.connect(lambda: self.setwhattext("Finished"))
         self.threadpool.start(worker)
 
     def check_proxies_concurrent(self, signals, proxies):
@@ -860,9 +866,9 @@ class ManageProxies(QWidget):
         with open(self.OUTPUT_FILE, "w") as f:
             f.write("\n".join(proxy for proxy, _ in results))
 
-        print(f"\n[Alstolfo-Proxy]: {len(results)} working SOCKS5 proxies under {self._MAX_MS}ms\n")
-        signals.text.emit(f"[Alstolfo-Proxy]: Done - {len(results)} proxies saved.")
-        signals.finished.emit()
+        # Weird bug where it double prints but only when "get test" is clicked
+        print(f"[Alstolfo]: {len(results)} working SOCKS5 proxies under {self._MAX_MS}ms")
+        signals.text.emit(f"[Alstolfo]: Done - {len(results)} proxies saved.")
 
 #Reskin of ManageProxies and could easily be one class but whatever
 class Launcher(QWidget):
@@ -896,7 +902,6 @@ class Launcher(QWidget):
 
         self.whatLabel = QLabel("Loading Script...", self.content)
         self.whatLabel.setGeometry(200, 50, 350, 50)
-        self.whatLabel.setStyleSheet("font-size:20px;")
 
         self.progress = QProgressBar(self.content)
         self.progress.setGeometry(200, 75, 350, 50)
@@ -922,14 +927,31 @@ class Launcher(QWidget):
         #QTimer.singleShot(200, self.what_doing)
         self.what_doing()
 
+    def scaleLabelText(self, label, max_size=20, min_size=6):
+        font = label.font()
+        rect = label.contentsRect()
+
+        for size in range(max_size, min_size, -1):
+            font.setPointSize(size)
+            metrics = QFontMetrics(font)
+            if metrics.boundingRect(label.text()).width() <= rect.width() \
+               and metrics.height() <= rect.height():
+                label.setFont(font)
+                return
+
+    def setwhattext(self,text):
+        self.whatLabel.setText(text)
+        self.scaleLabelText(self.whatLabel)
+
     def go_back(self):
         self.bf.parent().show()
         self.close()
+
     def switch_to_auto(self):
         self.active = self.pList[0]
         self.auto = True
         self.loop.quit()
-        self.whatLabel.setText("Continuing Task...")
+        self.setwhattext("Continuing Task...")
 
     def what_doing(self):
         if self.bf.settings["CLOSE_ON_LAUNCH"]:
@@ -939,11 +961,8 @@ class Launcher(QWidget):
         self.show()
         QApplication.processEvents()
         if self.pluhh == "Download":
-            print("Download")
             self.download()
         elif self.pluhh == "Launch":
-            print("Launch")
-            print("setQuitOnLastWindowClosed: False")
             QApplication.setQuitOnLastWindowClosed(True)
             self.launch()
         elif self.pluhh == "Download and Launch":
@@ -954,13 +973,13 @@ class Launcher(QWidget):
             proxies = f.readlines()
             proxies = [x.strip() for x in proxies]
             self.pList = proxies
+        if not self.pList:
+            return
         if self.bf._PROXY == "Auto":
             self.active = self.pList[0]
-            print(f"set active to[Auto]: {self.pList[0]} altRef: {self.active}")
             self.auto = True
         else:
             self.active = self.bf._PROXY
-            print(f"set active to[NoAuto]: {self.active}")
 
     def download(self):
         def task(signals):
@@ -983,7 +1002,6 @@ class Launcher(QWidget):
                     return None, None
 
             def fetchDownload(url, proxy):
-                #self.whatLabel.setText("Connecting/Downloading...")
                 proxies_cfg = {"http": f"socks5h://{proxy}", "https": f"socks5h://{proxy}"}
                 local_filename = url.split("/")[-1]
                 try:
@@ -1006,8 +1024,10 @@ class Launcher(QWidget):
                     signals.error.emit(str(e))
                     print(e)
                     return False
-
-            self.whatLabel.setText("Fetching Roblox Version...")
+            if not self.pList:
+                self.setwhattext("No proxies found. Please Get/Test proxies first.")
+                return
+            self.setwhattext("Fetching Roblox Version...")
             while len(self.pList) > 0:
                 version, most_likely_valid = fetchVersion(self.active)
                 if version and most_likely_valid:
@@ -1016,29 +1036,29 @@ class Launcher(QWidget):
                     if self.auto or self.bf.settings["DEFAULT_TO_AUTO"]:
                         self.pList.remove(self.active)
                         if not self.pList:
-                            self.whatLabel.setText("No proxies left, Try Getting/Testing")
+                            self.setwhattext("No proxies left, Try Getting/Testing")
                             return
                         self.active = self.pList[0]
                         self.auto = True
                     else:
-                        self.whatLabel.setText("Proxy Failed, Either Switch to Auto or Return")
+                        self.setwhattext("Proxy Failed, Either Switch to Auto or Return")
                         self.pList.remove(self.active)
                         self.loop.exec_()
 
             if not version or not most_likely_valid:
-                self.whatLabel.setText("Failed to fetch version. (You May Close/Return Now)")
+                self.setwhattext("Failed to fetch version. (You May Close/Return Now)")
                 return
 
-            self.whatLabel.setText(f"Downloading RobloxPlayer...")
-            print(f"Downloading RobloxPlayer - ClientVersion {version}")
+            self.setwhattext(f"Downloading RobloxPlayer...")
+            print(f"[Alstolfo]: Downloading RobloxPlayer - ClientVersion {version}")
             url = f"https://setup.rbxcdn.com/mac/arm64/{version}-RobloxPlayer.zip"
 
             ok = fetchDownload(url, most_likely_valid)
             if not ok:
-                self.whatLabel.setText("Download failed. Proxy got version but couldn't download.")
+                self.setwhattext("Download failed. Proxy got version but couldn't download.")
                 return
 
-            self.whatLabel.setText("Reconfiguring... (Close/Ignore Popup(s))")
+            self.setwhattext("Reconfiguring... (Close/Ignore Popup(s))")
             subprocess.run(["unzip", "-o",f"{pydir}/Game/{version}-RobloxPlayer.zip","-d",f"{pydir}/Game"], check=True)
 
             os.system(f"{pydir}/Game/RobloxPlayer.app/Contents/MacOS/RobloxPlayer")
@@ -1054,25 +1074,31 @@ class Launcher(QWidget):
             if self.pluhh == "Download and Launch":
                 self.launch()
             else:
-                self.whatLabel.setText("Finished Update. (Close Roblox If Opened)")
+                self.setwhattext("Finished Update. (Close Roblox If Opened)")
 
         # Create worker and connect signals
         worker = Worker(task)
         worker.signals.text.connect(self.whatLabel.setText)
         worker.signals.progress.connect(self.progress.setValue)
-        worker.signals.error.connect(lambda e: self.whatLabel.setText(f"Error: {e}"))
-        worker.signals.finished.connect(lambda: print("Worker finished."))
+        worker.signals.error.connect(lambda e: self.setwhattextf("Error: {e}"))
+        #worker.signals.finished.connect(lambda: print("Worker finished."))
 
         self.threadpool.start(worker)
 
     def launch(self):
-        import shutil
-        from pathlib import Path
-
-        self.whatLabel.setText("Launching...")
-
+        if not self.pList:
+            self.setwhattext("No proxies found. Please Get/Test proxies first.")
+            return
         app_path = f"{pydir}/Game/{blox_name}.app/Contents/MacOS/{blox_name}"
         app_dir = os.path.dirname(app_path)
+
+        if os.path.exists(f"{pydir}/Game/{blox_name}.app"):
+            pass
+        else:
+            self.setwhattext("Blox doesn't exist. Please update/re-install")
+            return
+
+        self.setwhattext("Launching...")
 
         # Deletes everything inside ~/Library/Logs/Roblox (recursive)
         def wipe_roblox_logs():
@@ -1086,7 +1112,7 @@ class Launcher(QWidget):
                     elif item.is_dir():
                         shutil.rmtree(item)
                 except Exception as e:
-                    print(f"Failed deleting {item}: {e}")
+                    print(f"[Alstolfo]Failed deleting {item}: {e}")
 
         # Try to codesign and kill any existing {blox_name} instances
         def prep_process(name=f"{blox_name}"):
@@ -1101,7 +1127,7 @@ class Launcher(QWidget):
                 pass
             try:
                 subprocess.run(
-                    f"pkill -9 -x {name}",
+                    f"kill -9 $(pgrep -x {name})",
                     shell=True,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL
@@ -1119,12 +1145,19 @@ class Launcher(QWidget):
             except Exception:
                 pass
 
+            if os.path.exists(f"{app_dir}/RobloxPlayerInstaller.app"):
+                pass
+            else:
+                self.setwhattext("Required file was removed. Please update/re-install")
+                signals.progress.emit(2)
+                return
+
             # Environment with proxy applied
             env = os.environ.copy()
             env["all_proxy"] = f"socks5h://{proxy}"
 
             # ----------------------------------------------------------
-            # Launch Roblox (REAL FIX: no wrapper, read stdout directly)
+            # Launch Roblox
             # ----------------------------------------------------------
             process = subprocess.Popen(
                 [app_path],
@@ -1136,19 +1169,14 @@ class Launcher(QWidget):
                 bufsize=1
             )
 
-            # Wait for "hello world"
             start = time.time()
-
             for line in process.stdout:
-                line_str = line.strip()
-                signals.text.emit(line_str)
-
-                if "hello world :3" in line_str.lower():
+                if "Hello world ...!" in line:
                     # Close pipe & detach
                     try:
                         process.stdout.close()
                     except:
-                        pass
+                        signals.text.emit("Something went wrong while launching, its probably fine...")
 
                     # Start Roblox again in the background, WITHOUT pipes
                     subprocess.Popen(
@@ -1159,7 +1187,7 @@ class Launcher(QWidget):
                         env=env
                     )
 
-                    # Kill the monitored instance (the one we attached to stdout)
+                    # Kill the monitored instance
                     try:
                         process.terminate()
                     except:
@@ -1167,7 +1195,6 @@ class Launcher(QWidget):
 
                     signals.progress.emit(1)
                     return
-
 
                 # Timeout
                 if time.time() - start > 5:
@@ -1190,15 +1217,19 @@ class Launcher(QWidget):
         # attempt kickoff using Worker
         def attempt(proxy):
             worker = Worker(worker_func, proxy)
-            worker.signals.text.connect(lambda t: print("OUT:", t))
+            worker.signals.text.connect(lambda t: print("[Alstolfo]: ", t))
             worker.signals.progress.connect(lambda result: handle_result(result, proxy))
-            worker.signals.error.connect(lambda e: self.whatLabel.setText(f"Error: {e}"))
+            worker.signals.error.connect(lambda e: self.setwhattext(f"Error: {e}"))
             self.threadpool.start(worker)
 
         # handle worker result (runs on main thread)
         def handle_result(result, proxy):
-            if result == 1:
-                self.whatLabel.setText("Successfully Launched")
+            if result == 2:
+                return
+
+            elif result == 1:
+                self.setwhattext("Successfully Launched")
+                QTimer.singleShot(3000, self.topBar.closePopup)
                 return
 
             if not self.auto and not self.bf.settings.get("DEFAULT_TO_AUTO", False):
@@ -1209,13 +1240,13 @@ class Launcher(QWidget):
                     self.pList.remove(proxy)
 
                 if not self.pList:
-                    self.whatLabel.setText("No proxies left, Try Getting/Testing")
+                    self.setwhattext("No proxies left, Try Getting/Testing")
                     return
 
                 self.active = self.pList[0]
                 attempt(self.active)
             else:
-                self.whatLabel.setText("Proxy Failed, Either Switch to Auto or Return")
+                self.setwhattext("Proxy Failed, Either Switch to Auto or Return")
                 if proxy in self.pList:
                     self.pList.remove(proxy)
                 self.loop.exec_()
@@ -1223,8 +1254,6 @@ class Launcher(QWidget):
 
         # start first attempt
         attempt(self.active)
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
