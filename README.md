@@ -1,3 +1,6 @@
+# Archived
+I'm not in high school anymore so I don't have my mac nor a reason to keep this updated
+
 # Alstolfo-Launcher
 A Roblox Downloader For Macos. 
 Made for bypassing my schools network restrictions, with socks5 proxies
