@@ -1,9 +1,8 @@
 # Archived
-I'm not in high school anymore so I don't have my mac nor a reason to keep this updated
+Archived — no longer have a Mac to test this on.
 
 # Alstolfo-Launcher
-A Roblox Downloader For Macos. 
-Made for bypassing my schools network restrictions, with socks5 proxies
+A macOS Roblox launcher with SOCKS5 proxy testing/ranking and cookie import from a personal (non-school) Mac or a jailbroken iPhone. Built to get around my school's Roblox block.
 
 ## How to build
 
@@ -43,7 +42,7 @@ and rename it and replace it to the one on your macbook
 - If the user has the option "Default To Auto" this will automaticly switch to the auto proxy setting instead of having the user manually click it on fail
   
 **Update/Re-Install**
-- This gets the newest version of roblox's MacOS application and attempts to sets it up in a way that bypasses my schools detection for roblox
+- This gets the newest version of Roblox's macOS application and attempts to set it up in a way that bypasses my school's detection for Roblox.
   
 **Manage Proxies**
 - This is an editor where you can add and delete proxies
