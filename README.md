@@ -2,7 +2,7 @@
 Archived — no longer have a Mac to test this on.
 
 # Alstolfo-Launcher
-A macOS Roblox launcher with SOCKS5 proxy testing/ranking and cookie import from a personal (non-school) Mac or a jailbroken iPhone. Built to get around my school's Roblox block.
+macOS Roblox launcher with SOCKS5 proxy testing/ranking; requires manually swapping in Roblox auth cookies from a personal Mac or jailbroken iPhone. Built to get around my school's Roblox block.
 
 ## How to build
 
